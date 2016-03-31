@@ -1,0 +1,5 @@
+// the configured options and settings for Generator
+#define Generator_VERSION_MAJOR @Generator_VERSION_MAJOR@
+#define Generator_VERSION_MINOR @Generator_VERSION_MINOR@
+
+#cmakedefine USE_BOOST

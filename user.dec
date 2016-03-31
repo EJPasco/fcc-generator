@@ -1,0 +1,33 @@
+# Define the aliased particles and their charge conjugates.
+Alias my_K*0 K*0
+Alias my_anti-K*0 anti-K*0
+Alias my_tau+ tau+
+Alias my_tau- tau-
+ChargeConj my_tau+ my_tau-
+ChargeConj my_K*0 my_anti-K*0
+
+# Modify the decay of the B0.
+Decay B0
+    1.000 my_K*0 my_tau+ my_tau- BTOXSLL;
+Enddecay
+#CDecay anti-B0
+
+# Modify the decay of the anti-B0.
+Decay anti-B0
+    1.000 my_anti-K*0 my_tau+ my_tau- BTOXSLL;
+Enddecay
+#CDecay anti-B0
+
+# Modify the decay of the K*0 (for the B0).
+Decay my_K*0
+    1.0  K+ pi- VSS;
+Enddecay
+CDecay my_anti-K*0
+
+# Modify the decay of the tau- (for the B0).
+Decay my_tau-
+    1.0 pi- pi- pi+ nu_tau TAUHADNU -0.108 0.7749 0.149 1.364 0.400 1.23 0.4;
+Enddecay
+CDecay my_tau+
+
+End
