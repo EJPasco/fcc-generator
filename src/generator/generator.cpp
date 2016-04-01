@@ -1,3 +1,8 @@
+/// Generator of user defined decays
+/// Uses PYTHIA to generate initial collision and then EvtGen to decay produced particles in user defined way
+/// Uses FCC-ee data model and HepMC event model as intermediate layer to transfer data from PYTHIA to PODIO (that takes care of storing data)
+/// Stores data in a ROOT file
+
 // Configuration
 #include "GeneratorConfig.h"
 
@@ -49,7 +54,7 @@ std::unordered_map<int, std::string> const particle_names = {{511, "B_d^0"},
 								   				   {431, "D_s^+"},
 							   					   {-431, "D_s^-"}};
 
-bool isBAtProduction(HepMC::GenParticle const * thePart); // function to tell "real" B from oscillations. Stolen from https://lhcb-release-area.web.cern.ch/LHCb-release-area/DOC/rec/latest_doxygen/da/db4/_hep_m_c_utils_8h_source.html
+bool isBAtProduction(HepMC::GenParticle const * thePart); // utility function to determine whether the particle is NOT a B oscillation. Stolen from https://lhcb-release-area.web.cern.ch/LHCb-release-area/DOC/rec/latest_doxygen/da/db4/_hep_m_c_utils_8h_source.html
 
 int main(int argc, char * argv[]){
 	std::string evtgen_root = std::getenv("EVTGEN_ROOT_DIR"); // path to EvtGen installation directory
@@ -309,7 +314,8 @@ int main(int argc, char * argv[]){
 	return EXIT_SUCCESS;
 }
 
-bool isBAtProduction(HepMC::GenParticle const * thePart) { // function to tell "real" B from oscillations. Stolen from https://lhcb-release-area.web.cern.ch/LHCb-release-area/DOC/rec/latest_doxygen/da/db4/_hep_m_c_utils_8h_source.html
+// utility function to determine whether the particle is NOT a B oscillation. Stolen from https://lhcb-release-area.web.cern.ch/LHCb-release-area/DOC/rec/latest_doxygen/da/db4/_hep_m_c_utils_8h_source.html
+bool isBAtProduction(HepMC::GenParticle const * thePart) {
 	if((abs(thePart->pdg_id()) != 511) && (abs(thePart->pdg_id()) != 531)) {
 		return true;
 	}

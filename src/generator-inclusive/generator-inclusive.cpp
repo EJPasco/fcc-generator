@@ -1,5 +1,15 @@
+/// Generator of inclusive decays
+/// Uses PYTHIA to generate initial collision and to decay produced particles
+/// Then examines the generated event and looks for decays of B0 into K, pi, tau and at least 3 additional charged tracks among daughters, granddaughters and grandgranddaughters of B. If such events is found it is stored
+/// Uses FCC-ee data model and HepMC event model as intermediate layer to transfer data from PYTHIA to PODIO (that takes care of storing data)
+/// Stores data in a ROOT file
+
 // Configuration
 #include "GeneratorConfig.h"
+
+// PODIO
+#include "podio/EventStore.h"
+#include "podio/ROOTWriter.h"
 
 // Data model
 #include "datamodel/EventInfo.h"
@@ -10,51 +20,44 @@
 #include "datamodel/GenVertexCollection.h"
 
 // STL
-// IO
 #include <iostream>
 #include <string>
-// EXIT_SUCCESS & EXIT_FAILURE
 #include <cstdlib>
-// exceptions handling
 #include <stdexcept>
-// time
 #include <chrono>
-// containers
 #include <unordered_set>
 #include <unordered_map>
-// math
-#include <cmath>
 
-// PODIO
-#include "podio/EventStore.h"
-#include "podio/ROOTWriter.h"
 
 // PYTHIA and HepMC
 #include "Pythia8/Pythia.h"
 #include "Pythia8Plugins/HepMC2.h"
-
-// #include "Pythia8Plugins/EvtGen.h"
 
 #ifdef USE_BOOST
 	// Boost
 	#include "boost/program_options.hpp"
 #endif
 
-bool isBAtProduction(HepMC::GenParticle const * thePart);
+bool isBAtProduction(HepMC::GenParticle const * thePart); // utility function to determine whether the particle is NOT a B oscillation. Stolen from https://lhcb-release-area.web.cern.ch/LHCb-release-area/DOC/rec/latest_doxygen/da/db4/_hep_m_c_utils_8h_source.html
 
+
+// utility function to determine whether a particle leaves a charged track
 inline bool is_charged_track(HepMC::GenParticle const * const ptc_ptr) {
 	return std::abs(ptc_ptr->pdg_id()) == 211 /* pions */ || std::abs(ptc_ptr->pdg_id()) == 321 /* kaons */ || std::abs(ptc_ptr->pdg_id()) == 2212 /* protons */ || std::abs(ptc_ptr->pdg_id()) == 11 /* electrons */ || std::abs(ptc_ptr->pdg_id()) == 13 /* muons */;
 }
 
 int main(int argc, char * argv[]){
-	std::size_t nevents = 0;
-	std::string pythia_cfgfile = "pythia.cmnd";
-	std::string output_filename = "output.root";
-	bool verbose = false;
+	// declaring and initializing some variables. Most of them will be set according to command line options passed to the program after parsing of command line arguments. However, if Boost is not used, the only available command line option is the number of events to generate; other variables will use the values set below
+	std::size_t nevents = 0; // number of events to generate
+	std::string pythia_cfgfile = "pythia.cmnd"; // name of PYTHIA cofiguration file
+	std::string output_filename = "output.root"; // name of the output file
+	bool verbose = false; // increased verbosity switch
 
 	#ifdef USE_BOOST
 		try {
 			boost::program_options::options_description desc("Usage");
+
+			// defining command line options. See boost::program_options documentation for more details
 			desc.add_options()
 							("help", "produce this help message")
 							("nevents,n", boost::program_options::value<std::size_t>(&nevents), "number of events to generate")
@@ -92,7 +95,7 @@ int main(int argc, char * argv[]){
 	#endif
 
 	auto start_time = std::chrono::system_clock::now();
-	auto last_lap = start_time;
+	auto last_timestamp = start_time;
 
 	if(verbose) {
 			std::cout << "PYTHIA config file: \"" << pythia_cfgfile << "\"" << std::endl << nevents << " events will be generated." << std:: endl;
@@ -102,10 +105,11 @@ int main(int argc, char * argv[]){
 		std::cout << "Prepairing data store" << std::endl;
 	}
 
+	// prepairing event store
 	podio::EventStore store;
 	podio::ROOTWriter writer(output_filename, &store);
 
-
+	// registering collections
 	auto & evinfocoll = store.create<fcc::EventInfoCollection>("EventInfo");
 	auto & pcoll = store.create<fcc::MCParticleCollection>("GenParticle");
 	auto & vcoll = store.create<fcc::GenVertexCollection>("GenVertex");
@@ -118,66 +122,56 @@ int main(int argc, char * argv[]){
 		std::cout << "Initializing PYTHIA" << std::endl;
 	}
 
-	Pythia8::Pythia pythia;
-	pythia.readFile(pythia_cfgfile);
+	// initializing PYTHIA
+	Pythia8::Pythia pythia; // creating PYTHIA generator object
+	pythia.readFile(pythia_cfgfile); // reading settings from file
 
-	pythia.init();
-
-	// auto evtgen = new EvtGenDecays(&pythia, "/afs/cern.ch/sw/lcg/releases/LCG_80/MCGenerators/evtgen/1.5.0/x86_64-slc6-gcc49-opt/share/DECAY_2010.DEC", "/afs/cern.ch/sw/lcg/releases/LCG_80/MCGenerators/evtgen/1.5.0/x86_64-slc6-gcc49-opt/share/evt.pdl");
-	// if (evtgen) {
-	// 	evtgen->readDecayFile("background_Bd2DsKTauNu.dec");
-	// 	evtgen->exclude(23); // make PYTHIA itself (not EvtGen) decay Z
-	// } else {
-	// 	std::cerr << "Unable to initialize EvtGen. Program stopped." << std::endl;
-	// 	return EXIT_FAILURE;
-	// }
+	pythia.init(); // initializing PYTHIA generator
 
 	// Interface for conversion from Pythia8::Event to HepMC event.
 	HepMC::Pythia8ToHepMC ToHepMC;
 
-	std::size_t counter = 0;
-	std::size_t total = 0;
+	std::size_t counter = 0; // number of "interesting" (that satisfy all the requirements) events generated so far
+	std::size_t total = 0; // total number of events generated so far
 
-	std::size_t b_counter = 0, tau_counter = 0, tau2pipipi_counter = 0, /*kstar_counter = 0,*/ charged_tracks_counter = 0;
+	std::size_t b_counter = 0, tau_counter = 0, tau2pipipi_counter = 0, charged_tracks_counter = 0; // number of events containing B0, tau, tau -> pi pi pi, and >=3 charged tracks respectively
 
 	if(verbose) {
 		std::cout << "Starting to generate events" << std::endl;
 	}
 
-	// auto generation_start_time = std::chrono::system_clock::now();
-	// auto last_b_generated_time = generation_start_time;
-
 	while(counter < nevents) {
 		if(pythia.next()) {
 			++total;
 
-			// evtgen->decay();
-
+			// creating HepMC event storage
 			HepMC::GenEvent * hepmcevt = new HepMC::GenEvent(HepMC::Units::GEV, HepMC::Units::MM);
+
+			// converting generated event to HepMC format
 			ToHepMC.fill_next_event(pythia, hepmcevt);
 
-			std::size_t decays_in_event = 0; // Counts decays particles in the event
+			std::size_t decays_in_event = 0; // counts interesting decays in the event
 
-			// looping through all particles in order to find B that decays into K* and tau (and tau in turn decays into 3 pis) and exclude their daughters from charged tracks count
+			// looping through all particles in order to find B that decays into K, pi and tau (and tau in turn decays into 3 pis) and exclude their daughters from charged tracks count
 			for(auto ib = hepmcevt->particles_begin(), endp = hepmcevt->particles_end(); ib != endp; ++ib) {
 				if(std::abs((*ib)->pdg_id()) == 511 && isBAtProduction(*ib)) {
 					++b_counter;
-					// if(verbose) {
-					// 	std::cout << b_counter << " B0 have been produced (" << "time taken to generate the event: " << std::chrono::duration<double>(std::chrono::system_clock::now() - last_b_generated_time).count() << " s; mean rate: " << b_counter / std::chrono::duration<double>(std::chrono::system_clock::now() - generation_start_time).count() << " B0 / s)" << std::endl;
-					// 	last_b_generated_time = std::chrono::system_clock::now();
-					// }
 
-					bool /*kstar_found = false*,*/ k_found = false, pi_found = false, tau_found = false, /*kstar2kpi = false,*/ tau2pipipi = false;
-					std::unordered_set<decltype(*ib)> exclude; // we exclude particles prodeuced in decays of tau and K*0 from charge tracks count
+					bool k_found = false, pi_found = false, tau_found = false, tau2pipipi = false; // flags signalazing whether k, pi, tau were found and if tau decays into 3 pions respectively
+					std::unordered_set<decltype(*ib)> exclude; // we exclude particles produced in decays of tau from charge tracks count
 
+					// iterating through the particles looking for tau, K and pi that were produced in the B0 decay
 					for(auto idaugh = hepmcevt->particles_begin(); idaugh != endp; ++idaugh) {
-						if((*idaugh)->production_vertex() != nullptr && (*idaugh)->production_vertex()->point3d() == (*ib)->end_vertex()->point3d()) { // if the paricle is a daughter of B. a check if the production vertex is valid is required in order to avoid null pointer dereferencing
-							if(std::abs((*idaugh)->pdg_id()) == 15) { // if it's a tau
+						// if the paricle is a daughter of B. a check if the production vertex is valid is required in order to avoid null pointer dereferencing
+						if((*idaugh)->production_vertex() != nullptr && (*idaugh)->production_vertex()->point3d() == (*ib)->end_vertex()->point3d()) {
+							// if it's a tau
+							if(std::abs((*idaugh)->pdg_id()) == 15) {
 								++tau_counter;
 								tau_found = true;
 
-								decltype(exclude) pi_daughters;
-								for(auto igranddaugh = hepmcevt->particles_begin(); igranddaugh != endp; ++igranddaugh) { // exclude pi daughters of tau
+								decltype(exclude) pi_daughters; // container for pions produced in the tau decay
+								// iterating through particles loking for pions produced in the tau decay
+								for(auto igranddaugh = hepmcevt->particles_begin(); igranddaugh != endp; ++igranddaugh) {
 									if((*igranddaugh)->production_vertex() != nullptr && (*idaugh)->end_vertex() != nullptr && (*igranddaugh)->production_vertex()->point3d() == (*idaugh)->end_vertex()->point3d() && std::abs((*igranddaugh)->pdg_id()) == 211) { // if the paricle is a daughter of tau. a check if the vertices are valid is required in order to avoid null pointer dereferencing
 										pi_daughters.emplace(*igranddaugh);
 									}
@@ -191,32 +185,13 @@ int main(int argc, char * argv[]){
 								}
 							}
 
-							// if(std::abs((*idaugh)->pdg_id()) == 313) {
-							// 	++kstar_counter;
-							// 	kstar_found = true;
-							//
-							// 	bool k_found = false, pi_found = false;
-							// 	for(auto igranddaugh = hepmcevt->particles_begin(); igranddaugh != endp; ++igranddaugh) { // exclude daughters of K*0
-							// 		if((*igranddaugh)->production_vertex() != nullptr && (*idaugh)->end_vertex() != nullptr && (*igranddaugh)->production_vertex()->point3d() == (*idaugh)->end_vertex()->point3d()) { // a check if the vertices are valid is required in order to avoid null pointer dereferencing
-							// 			if(std::abs((*igranddaugh)->pdg_id()) == 211) {
-							// 				pi_found = true;
-							// 				exclude.emplace(*igranddaugh);
-							// 			}
-							// 			if(std::abs((*igranddaugh)->pdg_id()) == 321) {
-							// 				k_found = true;
-							// 				exclude.emplace(*igranddaugh);
-							// 			}
-							// 		}
-							// 	}
-							//
-							// 	if(k_found && pi_found) {
-							// 		kstar2kpi = true;
-							// 	}
-							// }
+							// if it's a pion
 							if(std::abs((*idaugh)->pdg_id()) == 211) {
 								pi_found = true;
 								exclude.emplace(*idaugh);
 							}
+
+							// if it's a kaon
 							if(std::abs((*idaugh)->pdg_id()) == 321) {
 								k_found = true;
 								exclude.emplace(*idaugh);
@@ -224,19 +199,24 @@ int main(int argc, char * argv[]){
 						}
 					}
 
-					decltype(exclude) charged_tracks;
+					decltype(exclude) charged_tracks; // container for charget tracks. We can't just count charged tracks in a simple way since there is a double count possible (e.g. daughters of tau are granddaughters of B). std::set alows us to ignore duplicates
+					
 					// a new loop is required since we have to fill exclude set first
-					for(auto idaugh = hepmcevt->particles_begin(); idaugh != endp; ++idaugh) { // looking for charged_tracks among daughters of B0
+
+					//looking for charged_tracks among daughters of B0
+					for(auto idaugh = hepmcevt->particles_begin(); idaugh != endp; ++idaugh) {
 						if((*idaugh)->production_vertex() != nullptr && (*idaugh)->production_vertex()->point3d() == (*ib)->end_vertex()->point3d() && exclude.find(*idaugh) == exclude.end()) { // a check if the production vertex is valid is required in order to avoid null pointer dereferencing
 							if(is_charged_track(*idaugh)) {
 								charged_tracks.emplace(*idaugh);
 							} else {
-								for(auto igranddaugh = hepmcevt->particles_begin(); igranddaugh != endp; ++igranddaugh) { // looking for charged_tracks among granddaughters of B0
+								// looking for charged tracks among granddaughters of B0
+								for(auto igranddaugh = hepmcevt->particles_begin(); igranddaugh != endp; ++igranddaugh) {
 									if((*igranddaugh)->production_vertex() != nullptr && (*idaugh)->end_vertex() != nullptr && (*igranddaugh)->production_vertex()->point3d() == (*idaugh)->end_vertex()->point3d() && exclude.find(*igranddaugh) == exclude.end()) { // a check if the vertices are valid is required in order to avoid null pointer dereferencing
 										if(is_charged_track(*igranddaugh)) {
 											charged_tracks.emplace(*igranddaugh);
 										} else {
-											for(auto igrandgranddaugh = hepmcevt->particles_begin(); igrandgranddaugh != endp; ++igrandgranddaugh) { // looking for charged_tracks among grandgranddaughters of B0
+											// looking for charged tracks among grandgranddaughters of B0
+											for(auto igrandgranddaugh = hepmcevt->particles_begin(); igrandgranddaugh != endp; ++igrandgranddaugh) {
 												if(is_charged_track(*igrandgranddaugh) && (*igrandgranddaugh)->production_vertex() != nullptr && (*igranddaugh)->end_vertex() != nullptr && (*igrandgranddaugh)->production_vertex()->point3d() == (*igranddaugh)->end_vertex()->point3d() && exclude.find(*igrandgranddaugh) == exclude.end()) { // a check if the vertices are valid is required in order to avoid null pointer dereferencing
 													charged_tracks.emplace(*igrandgranddaugh);
 												}
@@ -259,7 +239,7 @@ int main(int argc, char * argv[]){
 						hepmcevt->print();
 					} else {
 						if(k_found && pi_found && tau_found) {
-							std::cout << "Tau" << (tau2pipipi ? "->pipipi" : "") << ", pi and K found and there are " << charged_tracks.size() << " charged tracks" << std::endl;
+							std::cout << "tau" << (tau2pipipi ? "->pipipi" : "") << ", pi and K found and there are " << charged_tracks.size() << " charged tracks" << std::endl;
 							hepmcevt->print();
 							std::cout << "Excluded particles:" << std::endl;
 							for(auto ptc : exclude) {
@@ -278,8 +258,8 @@ int main(int argc, char * argv[]){
 
 			if(decays_in_event > 0) {
 				if(verbose && counter % 100 == 0) {
-					std::cout << counter << " events with decay of B0 -> K*0 tau production have been generated (" << total << " total). " << std::chrono::duration<double>(std::chrono::system_clock::now() - last_lap).count() / 100 << "events / sec" << std::endl;
-					last_lap = std::chrono::system_clock::now();
+					std::cout << counter << " events with decay of B0 -> K*0 tau production have been generated (" << total << " total). " << std::chrono::duration<double>(std::chrono::system_clock::now() - last_timestamp).count() / 100 << "events / sec" << std::endl;
+					last_timestamp = std::chrono::system_clock::now();
 				}
 
 				// filling event info
@@ -339,11 +319,6 @@ int main(int argc, char * argv[]){
 
 	writer.finish();
 
-	// if(evtgen) {
-	// 	delete evtgen;
-	// 	evtgen = nullptr;
-	// }
-
 	std::cout << counter << " events with decay of B0 -> K*0 tau have been generated (" << total << " total)." << std::endl;
 	auto elapsed_seconds = std::chrono::duration<double>(std::chrono::system_clock::now() - start_time).count();
 	std::cout << "Elapsed time: " << elapsed_seconds << " s (" << counter / elapsed_seconds << " events / s)" << std::endl;
@@ -353,7 +328,8 @@ int main(int argc, char * argv[]){
 	return EXIT_SUCCESS;
 }
 
-bool isBAtProduction(HepMC::GenParticle const * thePart) { // stolen from https://lhcb-release-area.web.cern.ch/LHCb-release-area/DOC/rec/latest_doxygen/da/db4/_hep_m_c_utils_8h_source.html
+// utility function to determine whether the particle is NOT a B oscillation. Stolen from https://lhcb-release-area.web.cern.ch/LHCb-release-area/DOC/rec/latest_doxygen/da/db4/_hep_m_c_utils_8h_source.html
+bool isBAtProduction(HepMC::GenParticle const * thePart) {
 	if((abs(thePart->pdg_id()) != 511) && (abs(thePart->pdg_id()) != 531)) {
 		return true;
 	}
