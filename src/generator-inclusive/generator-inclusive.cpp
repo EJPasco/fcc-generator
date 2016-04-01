@@ -1,9 +1,3 @@
-/**
- * PYTHIAFCC event generator
- * Andrii Semkiv
- * 15.03.2016
- */
-
 // Configuration
 #include "GeneratorConfig.h"
 
