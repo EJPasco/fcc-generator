@@ -217,15 +217,6 @@ int main(int argc, char * argv[]){
 
 	writer.finish();
 
-	// std::cout << "Number of stable particles in events:" << std:: endl;
-	// for(auto const & nv : stable_ptcs_count) {
-	// 	std::cout << std::setw(4) << std::left << nv.first;
-	// 	for(std::size_t i = 0; i < 50 * nv.second / total; ++i) {
-	// 		std::cout << '*';
-	// 	}
-	// 	std::cout << std::setw(4) << std::right << std::fixed << std::setprecision(0) << nv.second * 100. / total << '%' << std::endl;
-	// }
-
 	std::cout << counter << " events with 7 or less particles in the final state have been generated (" << total << " total)." << std::endl;
 	for(auto const & nv : stable_ptcs_count) {
 		std::cout << std::setw(4) << std::right << nv.first << std::setw(4) << std::right << nv.second << "(" << nv.second * 100. / total << "%)" << std::endl;
