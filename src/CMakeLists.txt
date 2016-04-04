@@ -1,2 +1,3 @@
 add_subdirectory(generator)
 add_subdirectory(generator-inclusive)
+add_subdirectory(generator_Z2uubar)

@@ -1,0 +1,28 @@
+Init:showProcesses = off
+Init:showMultipartonInteractions = off
+Init:showChangedSettings = off
+Init:showAllSettings = off
+Init:showChangedParticleData = off
+Init:showChangedResonanceData = off
+Init:showAllParticleData = off
+Init:showOneParticleData = 0
+
+Next:numberCount = 1000
+Next:numberShowLHA = 0
+Next:numberShowInfo = 0
+Next:numberShowProcess = 0
+Next:numberShowEvent = 0
+Next:showScaleAndVertex = off
+Next:showMothersAndDaughters = off
+
+Stat:showProcessLevel = off
+Stat:showPartonLevel = off
+
+Beams:idA = 11
+Beams:idB = -11
+Beams:eCM = 91.188
+
+WeakSingleBoson:ffbar2gmZ = on
+23:onMode = off
+23:onIfAny = 2
+PDF:lepton = off
