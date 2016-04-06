@@ -50,7 +50,7 @@ Here __4__ is the number of parallel threads used for building. Set your value o
 ## Usage
 If compiled with Boost libraries usage is:
 ```bash
-generator otions
+generator <options>
 ```
 where possible `options` are:
 + `--help` - show usage help and exit
