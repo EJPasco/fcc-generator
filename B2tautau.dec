@@ -1,0 +1,18 @@
+# Define the aliased particles and their charge conjugates.
+Alias my_tau+ tau+
+Alias my_tau- tau-
+ChargeConj my_tau+ my_tau-
+
+# Modify the decay of the B_s0.
+Decay B_s0
+    1.0  my_tau+ my_tau- PHSP;
+Enddecay
+CDecay anti-B_s0
+
+# Modify the decay of the tau-.
+Decay my_tau-
+    1.0 pi- pi- pi+ nu_tau TAUHADNU -0.108 0.7749 0.149 1.364 0.400 1.23 0.4;
+Enddecay
+CDecay my_tau+
+
+End

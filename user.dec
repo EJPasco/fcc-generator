@@ -3,8 +3,8 @@ Alias my_K*0 K*0
 Alias my_anti-K*0 anti-K*0
 Alias my_tau+ tau+
 Alias my_tau- tau-
-ChargeConj my_tau+ my_tau-
 ChargeConj my_K*0 my_anti-K*0
+ChargeConj my_tau+ my_tau-
 
 # Modify the decay of the B0.
 Decay B0

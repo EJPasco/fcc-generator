@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0)
 project(generator)
 
 set(Generator_VERSION_MAJOR 0)
@@ -9,10 +9,6 @@ option(USE_BOOST "Use Boost provided program options parser implementation" ON)
 
 # configure a header file to pass some of the CMake settings to the source code
 configure_file("${PROJECT_SOURCE_DIR}/GeneratorConfig.h.in" "${PROJECT_BINARY_DIR}/include/GeneratorConfig.h")
-
-# should we use Boost to parse program options
-# option(USE_BOOST "Use Boost provided program options parser implementation" ON)
-# set(USE_BOOST ON BOOL "Use Boost provided program options parser implementation")
 
 # check if environment variables are set
 set(PYTHIA8DIR $ENV{PYTHIA8_DIR})
@@ -30,21 +26,18 @@ if(NOT HEPMC_PREFIX)
     message(FATAL_ERROR "You need to set HEPMC_PREFIX to the install prefix of HepMC.")
 endif()
 
+add_compile_options(-std=c++11 -O3 -fPIC -Wall -Wextra -Wpedantic)
 
-# Set up C++11
-set(CPP11FLAGS "-std=c++11")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CPP11FLAGS} -O3 -fPIC -Wall -Wextra -Wpedantic -Wconversion")
-
-# Make sure we find the Find*.cmake functions distributed with this package
+# make sure we find the Find*.cmake functions distributed with this package
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set(CMAKE_PREFIX_PATH $ENV{FCCEDM})
 
-# Make sure we find the Find*.cmake functions distributed with this package
+# make sure we find the Find*.cmake functions distributed with this package
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 find_package(podio REQUIRED HINTS $ENV{PODIO})
 message(STATUS "Found podio: ${podio_DIR}")
-# Make sure the library is found.
-# Not the case if LD_LIBRARY_PATH is wrong
+
+# make sure the library is found.
 find_library(PODIOLIB podio PATHS $ENV{PODIO}/lib)
 if (NOT PODIOLIB)
     message(FATAL_ERROR "libpodio.so(dylib) cannot be found dynamically. Make sure you have sourced PODIO init*.sh file to set up your environment to use PODIO")
@@ -77,7 +70,7 @@ include_directories(
     "${EVTGEN_INCLUDE_DIRS}"
     "${PHOTOS_INCLUDE_DIRS}"
     "${TAUOLA_INCLUDE_DIRS}"
-  )
+)
 
-# Add sub-directories
+# add sub-directories
 add_subdirectory(src)

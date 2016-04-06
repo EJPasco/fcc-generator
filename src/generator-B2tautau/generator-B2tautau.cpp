@@ -38,23 +38,6 @@
 	#include "boost/program_options.hpp"
 #endif
 
-std::unordered_map<int, std::string> const particle_names = {{511, "B_d^0"},
-												   {-511, "Anti-B_d^0"},
-												   {531, "B_s^0"},
-												   {-531, "Anti-B_s^0"},
-												   {313, "K^*0"},
-												   {313, "Anti-K^*0"},
-											       {-15, "tau"},
-											       {15, "Anti-tau"},
-											       {321, "K^+"},
-												   {-321, "K^-"},
-												   {211, "pi^+"},
-												   {-211, "pi^-"},
-										    	   {16, "nu_tau"},
-									   			   {-16, "Anti-nu_tau"},
-								   				   {431, "D_s^+"},
-							   					   {-431, "D_s^-"}};
-
 bool isBAtProduction(HepMC::GenParticle const * thePart); // utility function to determine whether the particle is NOT a B oscillation. Stolen from https://lhcb-release-area.web.cern.ch/LHCb-release-area/DOC/rec/latest_doxygen/da/db4/_hep_m_c_utils_8h_source.html
 
 int main(int argc, char * argv[]){
@@ -63,10 +46,10 @@ int main(int argc, char * argv[]){
 	// declaring and initializing some variables. Most of them will be set according to command line options passed to the program after parsing of command line arguments. However, if Boost is not used, the only available command line option is the number of events to generate; other variables will use the values set below
 	std::size_t nevents = 0; // number of events to generate
 	std::string pythia_cfgfile = "pythia.cmnd"; // name of PYTHIA cofiguration file
-	int keyptc = 511; // "key" particle
+	// int keyptc = 511; // "key" particle
 	std::string evtgen_decfile = evtgen_root + "/share/DECAY_2010.DEC"; // EvtGen decay file
 	std::string evtgen_pdlfile = evtgen_root + "/share/evt.pdl"; // EvtGen PDL file
-	std::string evtgen_user_decfile = "user.dec"; // user defined decays
+	std::string evtgen_user_decfile = "B2tautau.dec"; // user defined decays
 	std::string output_filename = "output.root"; // name of the output file
 	std::size_t verbosity = 0; // verbosity level
 
@@ -78,9 +61,8 @@ int main(int argc, char * argv[]){
 			desc.add_options()
 							("help", "produce this help message")
 							("nevents,n", boost::program_options::value<std::size_t>(&nevents), "number of events to generate")
-							("keyparticle,k", boost::program_options::value<int>(&keyptc)->default_value(511), "PDG ID of \"key\" particle (the one the redefined decay chain starts with)")
 							("pythiacfg,P", boost::program_options::value<std::string>(&pythia_cfgfile)->default_value("pythia.cmnd"), "PYTHIA config file")
-							("customdec,E", boost::program_options::value<std::string>(&evtgen_user_decfile)->default_value("user.dec"), "EvtGen user decay file")
+							("customdec,E", boost::program_options::value<std::string>(&evtgen_user_decfile)->default_value("B2tautau.dec"), "EvtGen user decay file")
 							("evtgendec", boost::program_options::value<std::string>(&evtgen_decfile)->default_value(evtgen_root + "/share/DECAY_2010.DEC"), "EvtGen decay file")
 							("evtgenpdl", boost::program_options::value<std::string>(&evtgen_pdlfile)->default_value(evtgen_root + "/share/evt.pdl"), "EvtGen PDL file")
 							("outfile,o", boost::program_options::value<std::string>(&output_filename)->default_value("output.root"), "Output file")
@@ -173,10 +155,10 @@ int main(int argc, char * argv[]){
 	auto generation_start_time = std::chrono::system_clock::now(); // time of beginning of the generation
 	auto last_timestamp = generation_start_time; // time of last time check
 
-	std::size_t keyptc_counter = 0; // number of events containing "key" particle generated so far
+	std::size_t counter = 0; // number of events containing "key" particle generated so far
 	std::size_t total = 0; // total number of events generated so far
 
-	while(keyptc_counter < nevents) {
+	while(counter < nevents) {
 		if(pythia.next()) {
 			++total;
 
@@ -188,18 +170,18 @@ int main(int argc, char * argv[]){
 			// converting generated event to HepMC format
 			ToHepMC.fill_next_event(pythia, hepmcevt);
 
-			if(std::count_if(hepmcevt->particles_begin(), hepmcevt->particles_end(), [keyptc](HepMC::GenParticle const * const ptc_ptr) {return std::abs(ptc_ptr->pdg_id()) == keyptc && isBAtProduction(ptc_ptr);}) > 0) {
-				++keyptc_counter;
+			if(std::count_if(hepmcevt->particles_begin(), hepmcevt->particles_end(), [](HepMC::GenParticle const * const ptc_ptr) {return std::abs(ptc_ptr->pdg_id()) == 531 && isBAtProduction(ptc_ptr);}) == 1) {
+				++counter;
 
 				if(verbosity >= 2) {
-					std::cout << keyptc_counter << " events with " << ((particle_names.find(keyptc) != particle_names.end()) ? particle_names.at(keyptc) : std::to_string(keyptc)) << " production have been generated (" << total << " total)" << std::endl;
+					std::cout << counter << " events with B^0_s production have been generated (" << total << " total)" << std::endl;
 					auto time_taken = std::chrono::duration<double>(std::chrono::system_clock::now() - last_timestamp).count();
 					std::cout << "Time taken: " << time_taken << " s. Current rate: " << 1. / time_taken << " ev / s" << std::endl;
 
 					last_timestamp = std::chrono::system_clock::now();
 				} else {
-					if(verbosity >= 1 && keyptc_counter % 100 == 0) {
-						std::cout << keyptc_counter << " events with " << ((particle_names.find(keyptc) != particle_names.end()) ? particle_names.at(keyptc) : std::to_string(keyptc)) << " production have been generated (" << total << " total)" << std::endl;
+					if(verbosity >= 1 && counter % 100 == 0) {
+						std::cout << counter << " events with B^0_s production have been generated (" << total << " total)" << std::endl;
 						auto time_taken = std::chrono::duration<double>(std::chrono::system_clock::now() - last_timestamp).count();
 						std::cout << "Time taken: " << time_taken << " s. Current rate: " << 100. / time_taken << " ev / s" << std::endl;
 
@@ -209,7 +191,7 @@ int main(int argc, char * argv[]){
 
 				// filling event info
 				auto evinfo = fcc::EventInfo();
-				evinfo.Number(keyptc_counter); // Number takes int as its parameter, so here's a narrowing conversion (std::size_t to int). Should be safe unless we get 2^32 events or more. Then undefined behaviour
+				evinfo.Number(counter); // Number takes int as its parameter, so here's a narrowing conversion (std::size_t to int). Should be safe unless we get 2^32 events or more. Then undefined behaviour
 				evinfocoll.push_back(evinfo);
 
 				// filling vertices
@@ -249,7 +231,7 @@ int main(int argc, char * argv[]){
 
 					if(verbosity >= 2) {
 						auto const & pdg_id = ptc.Core().Type;
-						std::cout << "Stored particle: " << pdg_id << (particle_names.find(pdg_id) != particle_names.end() ? std::string(" (") + particle_names.at(pdg_id) + ")" : "") << std::endl;
+						std::cout << "Stored particle: " << pdg_id << std::endl;
 
 						auto const & p4 = ptc.Core().P4;
 						std::cout << "\tP4: (Px = " << p4.Px << ", Py = " << p4.Py << ", Pz = " << p4.Pz << ", Mass = " << p4.Mass << ")" << std::endl;
@@ -300,8 +282,8 @@ int main(int argc, char * argv[]){
 		evtgen = nullptr;
 	}
 
-	std::cout << keyptc_counter << " events with production of " << ((particle_names.find(keyptc) != particle_names.end()) ? particle_names.at(keyptc) : std::to_string(keyptc)) << " have been generated (" << total << " total)." << std::endl;
-	std::cout << "Elapsed time: " << elapsed_time << " s. Mean rate: " << static_cast<long double>(keyptc_counter) / static_cast<long double>(elapsed_time) << " ev / s." << std::endl;
+	std::cout << counter << " events with production of B^0_s have been generated (" << total << " total)." << std::endl;
+	std::cout << "Elapsed time: " << elapsed_time << " s. Mean rate: " << static_cast<long double>(counter) / static_cast<long double>(elapsed_time) << " ev / s." << std::endl;
 
 	return EXIT_SUCCESS;
 }

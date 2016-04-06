@@ -28,7 +28,6 @@
 #include <unordered_set>
 #include <unordered_map>
 
-
 // PYTHIA and HepMC
 #include "Pythia8/Pythia.h"
 #include "Pythia8Plugins/HepMC2.h"
@@ -98,7 +97,7 @@ int main(int argc, char * argv[]){
 	auto last_timestamp = start_time;
 
 	if(verbose) {
-			std::cout << "PYTHIA config file: \"" << pythia_cfgfile << "\"" << std::endl << nevents << " events will be generated." << std:: endl;
+		std::cout << "PYTHIA config file: \"" << pythia_cfgfile << "\"" << std::endl << nevents << " events will be generated." << std:: endl;
 	}
 
 	if(verbose) {
@@ -200,7 +199,7 @@ int main(int argc, char * argv[]){
 					}
 
 					decltype(exclude) charged_tracks; // container for charget tracks. We can't just count charged tracks in a simple way since there is a double count possible (e.g. daughters of tau are granddaughters of B). std::set alows us to ignore duplicates
-					
+
 					// a new loop is required since we have to fill exclude set first
 
 					//looking for charged_tracks among daughters of B0
@@ -264,7 +263,7 @@ int main(int argc, char * argv[]){
 
 				// filling event info
 				auto evinfo = fcc::EventInfo();
-				evinfo.Number(counter);
+				evinfo.Number(counter); // Number takes int as its parameter, so here's a narrowing conversion (std::size_t to int). Should be safe unless we get 2^32 events or more. Then undefined behaviour
 				evinfocoll.push_back(evinfo);
 
 				// filling vertices
@@ -287,7 +286,7 @@ int main(int argc, char * argv[]){
 					core.Type = (*ip)->pdg_id();
 					core.Status = (*ip)->status();
 
-					core.Charge = pythia.particleData.charge(core.Type);
+					core.Charge = pythia.particleData.charge(core.Type); // PYTHIA returns charge as a double value (in case it's quark), so here's a narrowing conversion (double to int), but here it's safe
 					core.P4.Mass = (*ip)->momentum().m();
 					core.P4.Px = (*ip)->momentum().px();
 					core.P4.Py = (*ip)->momentum().py();
@@ -321,16 +320,16 @@ int main(int argc, char * argv[]){
 
 	std::cout << counter << " events with decay of B0 -> K*0 tau have been generated (" << total << " total)." << std::endl;
 	auto elapsed_seconds = std::chrono::duration<double>(std::chrono::system_clock::now() - start_time).count();
-	std::cout << "Elapsed time: " << elapsed_seconds << " s (" << counter / elapsed_seconds << " events / s)" << std::endl;
+	std::cout << "Elapsed time: " << elapsed_seconds << " s (" << static_cast<long double>(counter) / static_cast<long double>(elapsed_seconds) << " events / s)" << std::endl;
 
-	std::cout << "B0: " << b_counter << std::endl << "tau: " << tau_counter << std::endl << /*"K*0: " << kstar_counter << std::endl << */"3 tracks: " << charged_tracks_counter << std::endl;
+	std::cout << "B0: " << b_counter << std::endl << "tau: " << tau_counter << std::endl << "3 tracks: " << charged_tracks_counter << std::endl;
 
 	return EXIT_SUCCESS;
 }
 
 // utility function to determine whether the particle is NOT a B oscillation. Stolen from https://lhcb-release-area.web.cern.ch/LHCb-release-area/DOC/rec/latest_doxygen/da/db4/_hep_m_c_utils_8h_source.html
 bool isBAtProduction(HepMC::GenParticle const * thePart) {
-	if((abs(thePart->pdg_id()) != 511) && (abs(thePart->pdg_id()) != 531)) {
+	if((std::abs(thePart->pdg_id()) != 511) && (std::abs(thePart->pdg_id()) != 531)) {
 		return true;
 	}
 	if(thePart->production_vertex() == nullptr) {

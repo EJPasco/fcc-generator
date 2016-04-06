@@ -28,6 +28,7 @@
 #include <chrono>
 #include <map>
 #include <unordered_map>
+#include <algorithm>
 
 // PYTHIA and HepMC
 #include "Pythia8/Pythia.h"
@@ -37,8 +38,6 @@
 	// Boost
 	#include "boost/program_options.hpp"
 #endif
-
-std::size_t n_stable_in_event(HepMC::GenEvent const * const event);
 
 // utility function to determine whether a particle leaves a charged track
 inline bool is_charged_track(HepMC::GenParticle const * const ptc_ptr) {
@@ -149,7 +148,7 @@ int main(int argc, char * argv[]){
 			// converting generated event to HepMC format
 			ToHepMC.fill_next_event(pythia, hepmcevt);
 
-			auto nstable = n_stable_in_event(hepmcevt);
+			auto nstable = std::count_if(hepmcevt->particles_begin(), hepmcevt->particles_end(), [](HepMC::GenParticle const * const ptc_ptr) {return ptc_ptr->status() == 1;});
 
 			if(nstable <= 7) {
 				stable_ptcs_count[nstable]++;
@@ -162,7 +161,7 @@ int main(int argc, char * argv[]){
 
 				// filling event info
 				auto evinfo = fcc::EventInfo();
-				evinfo.Number(counter);
+				evinfo.Number(counter); // Number takes int as its parameter, so here's a narrowing conversion (std::size_t to int). Should be safe unless we get 2^32 events or more. Then undefined behaviour
 				evinfocoll.push_back(evinfo);
 
 				// filling vertices
@@ -185,7 +184,7 @@ int main(int argc, char * argv[]){
 					core.Type = (*ip)->pdg_id();
 					core.Status = (*ip)->status();
 
-					core.Charge = pythia.particleData.charge(core.Type);
+					core.Charge = pythia.particleData.charge(core.Type); // PYTHIA returns charge as a double value (in case it's quark), so here's a narrowing conversion (double to int), but here it's safe
 					core.P4.Mass = (*ip)->momentum().m();
 					core.P4.Px = (*ip)->momentum().px();
 					core.P4.Py = (*ip)->momentum().py();
@@ -219,28 +218,17 @@ int main(int argc, char * argv[]){
 
 	std::cout << counter << " events with 7 or less particles in the final state have been generated (" << total << " total)." << std::endl;
 	for(auto const & nv : stable_ptcs_count) {
-		std::cout << std::setw(4) << std::right << nv.first << std::setw(4) << std::right << nv.second << "(" << nv.second * 100. / total << "%)" << std::endl;
+		std::cout << std::setw(4) << std::right << nv.first << std::setw(4) << std::right << nv.second << "(" << static_cast<long double>(nv.second) * static_cast<long double>(100) / static_cast<long double>(total) << "%)" << std::endl;
 	}
 	auto elapsed_seconds = std::chrono::duration<double>(std::chrono::system_clock::now() - start_time).count();
-	std::cout << "Elapsed time: " << elapsed_seconds << " s (" << counter / elapsed_seconds << " events / s)" << std::endl;
+	std::cout << "Elapsed time: " << elapsed_seconds << " s (" << static_cast<long double>(counter) / static_cast<long double>(elapsed_seconds) << " events / s)" << std::endl;
 
 	return EXIT_SUCCESS;
 }
 
-std::size_t n_stable_in_event(HepMC::GenEvent const * const event_ptr) {
-	std::size_t counter = 0;
-	for(auto it = event_ptr->particles_begin(), endit = event_ptr->particles_end(); it != endit; ++it) {
-		if((*it)->status() == 1) {
-			++counter;
-		}
-	}
-
-	return counter;
-}
-
 // utility function to determine whether the particle is NOT a B oscillation. Stolen from https://lhcb-release-area.web.cern.ch/LHCb-release-area/DOC/rec/latest_doxygen/da/db4/_hep_m_c_utils_8h_source.html
 bool isBAtProduction(HepMC::GenParticle const * thePart) {
-	if((abs(thePart->pdg_id()) != 511) && (abs(thePart->pdg_id()) != 531)) {
+	if((std::abs(thePart->pdg_id()) != 511) && (std::abs(thePart->pdg_id()) != 531)) {
 		return true;
 	}
 	if(thePart->production_vertex() == nullptr) {
