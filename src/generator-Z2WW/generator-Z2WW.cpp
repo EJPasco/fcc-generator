@@ -1,6 +1,6 @@
-/// Generator of Z -> u ubar decays
+/// Generator of Z -> W+ (-> l+ nu_l) W- (-> l- nu_l) decays
 /// Uses PYTHIA to generate initial collision and to decay produced particles
-/// Stores only events with less than 7 particles in the final state
+/// Stores only events both neutrino's momenta less than 1 GeV
 /// Uses FCC-ee data model and HepMC event model as intermediate layer to transfer data from PYTHIA to PODIO (that takes care of storing data)
 /// Stores data in a ROOT file
 
@@ -39,16 +39,16 @@
 	#include "boost/program_options.hpp"
 #endif
 
-// utility function to determine whether a particle leaves a charged track
-inline bool is_charged_track(HepMC::GenParticle const * const ptc_ptr) {
-	return std::abs(ptc_ptr->pdg_id()) == 211 /* pions */ || std::abs(ptc_ptr->pdg_id()) == 321 /* kaons */ || std::abs(ptc_ptr->pdg_id()) == 2212 /* protons */ || std::abs(ptc_ptr->pdg_id()) == 11 /* electrons */ || std::abs(ptc_ptr->pdg_id()) == 13 /* muons */;
-}
+// // utility function to determine whether a particle leaves a charged track
+// inline bool is_charged_track(HepMC::GenParticle const * const ptc_ptr) {
+// 	return std::abs(ptc_ptr->pdg_id()) == 211 /* pions */ || std::abs(ptc_ptr->pdg_id()) == 321 /* kaons */ || std::abs(ptc_ptr->pdg_id()) == 2212 /* protons */ || std::abs(ptc_ptr->pdg_id()) == 11 /* electrons */ || std::abs(ptc_ptr->pdg_id()) == 13 /* muons */;
+// }
 
 int main(int argc, char * argv[]){
 	// declaring and initializing some variables. Most of them will be set according to command line options passed to the program after parsing of command line arguments. However, if Boost is not used, the only available command line option is the number of events to generate; other variables will use the values set below
 	std::size_t nevents = 0; // number of events to generate
-	std::string pythia_cfgfile = "Z2uubar.cmnd"; // name of PYTHIA cofiguration file
-	std::string output_filename = "Z2uubar.root"; // name of the output file
+	std::string pythia_cfgfile = "Z2WW.cmnd"; // name of PYTHIA cofiguration file
+	std::string output_filename = "Z2WW.root"; // name of the output file
 	bool verbose = false; // increased verbosity switch
 
 	#ifdef USE_BOOST
@@ -59,8 +59,8 @@ int main(int argc, char * argv[]){
 			desc.add_options()
 							("help", "produce this help message")
 							("nevents,n", boost::program_options::value<std::size_t>(&nevents), "number of events to generate")
-							("pythiacfg,P", boost::program_options::value<std::string>(&pythia_cfgfile)->default_value("Z2uubar.cmnd"), "PYTHIA config file")
-							("outfile,o", boost::program_options::value<std::string>(&output_filename)->default_value("Z2uubar.root"), "Output file")
+							("pythiacfg,P", boost::program_options::value<std::string>(&pythia_cfgfile)->default_value("Z2WW.cmnd"), "PYTHIA config file")
+							("outfile,o", boost::program_options::value<std::string>(&output_filename)->default_value("Z2WW.root"), "Output file")
 							("verbose,v", boost::program_options::bool_switch()->default_value(false), "Run with increased verbosity")
 			;
 			boost::program_options::variables_map vm;
@@ -136,11 +136,12 @@ int main(int argc, char * argv[]){
 		std::cout << "Starting to generate events" << std::endl;
 	}
 
-	std::map<std::size_t, std::size_t> stable_ptcs_count;
+	// std::map<std::size_t, std::size_t> stable_ptcs_count;
 
 	while(counter < nevents) {
 		if(pythia.next()) {
 			++total;
+			++counter;
 
 			// creating HepMC event storage
 			HepMC::GenEvent * hepmcevt = new HepMC::GenEvent(HepMC::Units::GEV, HepMC::Units::MM);
@@ -148,63 +149,65 @@ int main(int argc, char * argv[]){
 			// converting generated event to HepMC format
 			ToHepMC.fill_next_event(pythia, hepmcevt);
 
-			auto nstable = std::count_if(hepmcevt->particles_begin(), hepmcevt->particles_end(), [](HepMC::GenParticle const * const ptc_ptr) {return ptc_ptr->status() == 1;});
+			hepmcevt->print();
 
-			if(nstable <= 7) {
-				stable_ptcs_count[nstable]++;
-				++counter;
+			// auto nstable = std::count_if(hepmcevt->particles_begin(), hepmcevt->particles_end(), [](HepMC::GenParticle const * const ptc_ptr) {return ptc_ptr->status() == 1;});
 
-				if(verbose && counter % 100 == 0) {
-					std::cout << counter << " events with with 7 or less particles in the final state have been generated (" << total << " total). " << std::chrono::duration<double>(std::chrono::system_clock::now() - last_timestamp).count() / 100 << "events / sec" << std::endl;
-					last_timestamp = std::chrono::system_clock::now();
-				}
+			// if(nstable <= 7) {
+			// 	stable_ptcs_count[nstable]++;
+			// 	++counter;
 
-				// filling event info
-				auto evinfo = fcc::EventInfo();
-				evinfo.Number(counter); // Number takes int as its parameter, so here's a narrowing conversion (std::size_t to int). Should be safe unless we get 2^32 events or more. Then undefined behaviour
-				evinfocoll.push_back(evinfo);
-
-				// filling vertices
-				std::unordered_map<HepMC::GenVertex *, fcc::GenVertex> vtx_map;
-				for(auto iv = hepmcevt->vertices_begin(), endv = hepmcevt->vertices_end(); iv != endv; ++iv) {
-					auto vtx = fcc::GenVertex();
-					vtx.Position().X = (*iv)->position().x();
-					vtx.Position().Y = (*iv)->position().y();
-					vtx.Position().Z = (*iv)->position().z();
-					vtx.Ctau((*iv)->position().t());
-					vtx_map.emplace(*iv, vtx);
-
-					vcoll.push_back(vtx);
-				}
-
-				// filling particles
-				for(auto ip = hepmcevt->particles_begin(), endp = hepmcevt->particles_end(); ip != endp; ++ip) {
-					auto ptc = fcc::MCParticle();
-					auto & core = ptc.Core();
-					core.Type = (*ip)->pdg_id();
-					core.Status = (*ip)->status();
-
-					core.Charge = pythia.particleData.charge(core.Type); // PYTHIA returns charge as a double value (in case it's quark), so here's a narrowing conversion (double to int), but here it's safe
-					core.P4.Mass = (*ip)->momentum().m();
-					core.P4.Px = (*ip)->momentum().px();
-					core.P4.Py = (*ip)->momentum().py();
-					core.P4.Pz = (*ip)->momentum().pz();
-
-					auto prodvtx = vtx_map.find((*ip)->production_vertex());
-					if(prodvtx != vtx_map.end()) {
-						ptc.StartVertex(prodvtx->second);
-					}
-					auto endvtx = vtx_map.find((*ip)->end_vertex());
-					if(endvtx != vtx_map.end()) {
-						ptc.EndVertex(endvtx->second);
-					}
-
-					pcoll.push_back(ptc);
-				}
-
-				writer.writeEvent();
-				store.clearCollections();
+			if(verbose && counter % 100 == 0) {
+				std::cout << counter << " events with with 7 or less particles in the final state have been generated (" << total << " total). " << std::chrono::duration<double>(std::chrono::system_clock::now() - last_timestamp).count() / 100 << "events / sec" << std::endl;
+				last_timestamp = std::chrono::system_clock::now();
 			}
+
+			// filling event info
+			auto evinfo = fcc::EventInfo();
+			evinfo.Number(counter); // Number takes int as its parameter, so here's a narrowing conversion (std::size_t to int). Should be safe unless we get 2^32 events or more. Then undefined behaviour
+			evinfocoll.push_back(evinfo);
+
+			// filling vertices
+			std::unordered_map<HepMC::GenVertex *, fcc::GenVertex> vtx_map;
+			for(auto iv = hepmcevt->vertices_begin(), endv = hepmcevt->vertices_end(); iv != endv; ++iv) {
+				auto vtx = fcc::GenVertex();
+				vtx.Position().X = (*iv)->position().x();
+				vtx.Position().Y = (*iv)->position().y();
+				vtx.Position().Z = (*iv)->position().z();
+				vtx.Ctau((*iv)->position().t());
+				vtx_map.emplace(*iv, vtx);
+
+				vcoll.push_back(vtx);
+			}
+
+			// filling particles
+			for(auto ip = hepmcevt->particles_begin(), endp = hepmcevt->particles_end(); ip != endp; ++ip) {
+				auto ptc = fcc::MCParticle();
+				auto & core = ptc.Core();
+				core.Type = (*ip)->pdg_id();
+				core.Status = (*ip)->status();
+
+				core.Charge = pythia.particleData.charge(core.Type); // PYTHIA returns charge as a double value (in case it's quark), so here's a narrowing conversion (double to int), but here it's safe
+				core.P4.Mass = (*ip)->momentum().m();
+				core.P4.Px = (*ip)->momentum().px();
+				core.P4.Py = (*ip)->momentum().py();
+				core.P4.Pz = (*ip)->momentum().pz();
+
+				auto prodvtx = vtx_map.find((*ip)->production_vertex());
+				if(prodvtx != vtx_map.end()) {
+					ptc.StartVertex(prodvtx->second);
+				}
+				auto endvtx = vtx_map.find((*ip)->end_vertex());
+				if(endvtx != vtx_map.end()) {
+					ptc.EndVertex(endvtx->second);
+				}
+
+				pcoll.push_back(ptc);
+			}
+
+			writer.writeEvent();
+			store.clearCollections();
+			// }
 
 			// freeing resources
 			if(hepmcevt) {
@@ -216,10 +219,7 @@ int main(int argc, char * argv[]){
 
 	writer.finish();
 
-	std::cout << counter << " events with 7 or less particles in the final state have been generated (" << total << " total)." << std::endl;
-	for(auto const & nv : stable_ptcs_count) {
-		std::cout << std::setw(4) << std::right << nv.first << std::setw(4) << std::right << nv.second << "(" << static_cast<long double>(nv.second) * static_cast<long double>(100) / static_cast<long double>(total) << "%)" << std::endl;
-	}
+	std::cout << counter << " events have been generated (" << total << " total)." << std::endl;
 	auto elapsed_seconds = std::chrono::duration<double>(std::chrono::system_clock::now() - start_time).count();
 	std::cout << "Elapsed time: " << elapsed_seconds << " s (" << static_cast<long double>(counter) / static_cast<long double>(elapsed_seconds) << " events / s)" << std::endl;
 

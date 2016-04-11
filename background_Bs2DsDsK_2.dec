@@ -1,40 +1,42 @@
 # Define the aliased particles and their charge conjugates.
-Alias my_B_s0 B_s0
-Alias my_anti-B_s0 anti-B_s0
 Alias my_K*0 K*0
 Alias my_anti-K*0 anti-K*0
-Alias my_Ds+ D_s+
-Alias my_Ds- D_s-
+Alias my_Ds+_4pi D_s+
+Alias my_Ds-_4pi D_s-
+Alias my_Ds+_2l D_s+
+Alias my_Ds-_2l D_s-
 Alias my_tau+ tau+
 Alias my_tau- tau-
-ChargeConj my_B_s0 my_anti-B_s0
 ChargeConj my_K*0 my_anti-K*0
-ChargeConj my_Ds+ my_Ds-
+ChargeConj my_Ds+_4pi my_Ds-_4pi
+ChargeConj my_Ds+_2l my_Ds-_2l
 ChargeConj my_tau+ my_tau-
 
-# Modify the decay of the B_s0
-Decay my_B_s0
-    1.0  my_Ds+ my_Ds- my_K*0 PHOTOS PHSP;
+# Modify the decay of the B_s0.
+Decay B_s0
+    1.0  my_Ds+_4pi my_Ds-_2l my_K*0 PHOTOS PHSP;
 Enddecay
-CDecay my_anti-B_s0
+CDecay anti-B_s0
 
-# Modify the decay of the my_D_s+
-Decay my_Ds+
+# Modify the decay of the D_s+.
+Decay my_Ds+_4pi
     1.0  pi+ pi+ pi- pi0 PHSP;
 Enddecay
+CDecay my_Ds-_4pi
 
-# Modify the decay of the my_D_s-
-Decay my_Ds-
+# Modify the decay of the D_s+.
+Decay my_Ds+_2l
     1.0  my_tau+ nu_tau SLN;
 Enddecay
+CDecay my_Ds-_2l
 
-# Modify the decay of the K*0
+# Modify the decay of the K*0.
 Decay my_K*0
     1.0  K+ pi- VSS;
 Enddecay
 CDecay my_anti-K*0
 
-# Modify the decay of the tau-
+# Modify the decay of the tau-.
 Decay my_tau-
     1.0 pi- pi- pi+ nu_tau TAUHADNU -0.108 0.7749 0.149 1.364 0.400 1.23 0.4;
 Enddecay

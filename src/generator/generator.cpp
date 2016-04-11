@@ -188,10 +188,13 @@ int main(int argc, char * argv[]){
 			// converting generated event to HepMC format
 			ToHepMC.fill_next_event(pythia, hepmcevt);
 
-			if(std::count_if(hepmcevt->particles_begin(), hepmcevt->particles_end(), [keyptc](HepMC::GenParticle const * const ptc_ptr) {return std::abs(ptc_ptr->pdg_id()) == keyptc && isBAtProduction(ptc_ptr);}) > 0) {
-				++keyptc_counter;
+			auto keyptc_in_event = std::count_if(hepmcevt->particles_begin(), hepmcevt->particles_end(), [keyptc](HepMC::GenParticle const * const ptc_ptr) {return std::abs(ptc_ptr->pdg_id()) == keyptc && isBAtProduction(ptc_ptr);});
+			if(keyptc_in_event > 0) {
+				keyptc_counter += keyptc_in_event;
 
 				if(verbosity >= 2) {
+					hepmcevt->print();
+
 					std::cout << keyptc_counter << " events with " << ((particle_names.find(keyptc) != particle_names.end()) ? particle_names.at(keyptc) : std::to_string(keyptc)) << " production have been generated (" << total << " total)" << std::endl;
 					auto time_taken = std::chrono::duration<double>(std::chrono::system_clock::now() - last_timestamp).count();
 					std::cout << "Time taken: " << time_taken << " s. Current rate: " << 1. / time_taken << " ev / s" << std::endl;
