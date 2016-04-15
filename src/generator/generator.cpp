@@ -20,6 +20,7 @@
 
 // STL
 #include <iostream>
+#include <iomanip>
 #include <string>
 #include <cstdlib>
 #include <stdexcept>
@@ -44,8 +45,8 @@ std::unordered_map<int, std::string> const particle_names = {{511, "B_d^0"},
 												   {-531, "Anti-B_s^0"},
 												   {313, "K^*0"},
 												   {313, "Anti-K^*0"},
-											       {-15, "tau"},
-											       {15, "Anti-tau"},
+											       {15, "tau-"},
+											       {-15, "tau+"},
 											       {321, "K^+"},
 												   {-321, "K^-"},
 												   {211, "pi^+"},
@@ -255,18 +256,18 @@ int main(int argc, char * argv[]){
 						std::cout << "Stored particle: " << pdg_id << (particle_names.find(pdg_id) != particle_names.end() ? std::string(" (") + particle_names.at(pdg_id) + ")" : "") << std::endl;
 
 						auto const & p4 = ptc.Core().P4;
-						std::cout << "\tP4: (Px = " << p4.Px << ", Py = " << p4.Py << ", Pz = " << p4.Pz << ", Mass = " << p4.Mass << ")" << std::endl;
+						std::cout << std::setprecision(12) << "\tP4: (Px = " << p4.Px << ", Py = " << p4.Py << ", Pz = " << p4.Pz << ", Mass = " << p4.Mass << ")" << std::endl;
 
 						if(ptc.StartVertex().isAvailable()) {
 							auto const & svtx = ptc.StartVertex().Position();
-							std::cout << "\tProduction vertex: (X = " << svtx.X << ", Y = " << svtx.Y << ", Z = " << svtx.Z << ")" << std::endl;
+							std::cout << std::setprecision(12) << "\tProduction vertex: (X = " << svtx.X << ", Y = " << svtx.Y << ", Z = " << svtx.Z << ")" << std::endl;
 						} else {
 							std::cout << "\tProduction vertex is not valid" << std::endl;
 						}
 
 						if(ptc.EndVertex().isAvailable()) {
 							auto const & evtx = ptc.EndVertex().Position();
-							std::cout << "\tDecay vertex: (X = " << evtx.X << ", Y = " << evtx.Y << ", Z = " << evtx.Z << ")" << std::endl;
+							std::cout << std::setprecision(12) << "\tDecay vertex: (X = " << evtx.X << ", Y = " << evtx.Y << ", Z = " << evtx.Z << ")" << std::endl;
 						} else {
 							std::cout << "\tDecay vertex is not valid" << std::endl;
 						}
@@ -274,7 +275,7 @@ int main(int argc, char * argv[]){
 						if(ptc.StartVertex().isAvailable() && ptc.EndVertex().isAvailable()) {
 							auto const & svtx = ptc.StartVertex().Position(), evtx = ptc.EndVertex().Position();
 
-							std::cout << "\tFlight distance: " << std::sqrt((evtx.X - svtx.X) * (evtx.X - svtx.X) + (evtx.Y - svtx.Y) * (evtx.Y - svtx.Y) + (evtx.Z - svtx.Z) * (evtx.Z - svtx.Z)) << "mm" << std::endl;
+							std::cout << std::setprecision(12) << "\tFlight distance: " << std::sqrt((evtx.X - svtx.X) * (evtx.X - svtx.X) + (evtx.Y - svtx.Y) * (evtx.Y - svtx.Y) + (evtx.Z - svtx.Z) * (evtx.Z - svtx.Z)) << "mm" << std::endl;
 						}
 
 					}
