@@ -159,7 +159,7 @@ int main(int argc, char * argv[]){
 	}
 
 	//
-	auto evtgen = new EvtGenDecays(&pythia, evtgen_decfile.c_str(), evtgen_pdlfile.c_str()); // creating EvtGen generator
+	auto evtgen = new EvtGenDecays(&pythia, evtgen_decfile.c_str(), evtgen_pdlfile.c_str(), nullptr, nullptr, 1, false, true, true, false); // creating EvtGen generator
 	if (evtgen) {
 		evtgen->readDecayFile(evtgen_user_decfile.c_str()); // reading user defined decays
 		evtgen->exclude(23); // make PYTHIA itself (not EvtGen) decay Z
