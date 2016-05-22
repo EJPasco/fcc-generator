@@ -3,7 +3,7 @@ Generator of events for _B<sup>0</sup><sub>d</sub> &rarr; K<sup>*0</sup> &tau;<s
 ## Requirements
 ### Basic
 + C++11-compatible compiler (we recommend [G++](https://gcc.gnu.org/))
-+ [CMake](https://cmake.org/) 2.8 or higher
++ [CMake](https://cmake.org/) 3.0 or higher
 + [Boost](http://www.boost.org/) (optionally)
 + [Git](https://git-scm.com/) (optionally)
 
@@ -31,7 +31,7 @@ source init.sh
 ```
 + Create a dedicated build directory e.g. __build__:
 ```bash
-mkdir build 
+mkdir build
 ```
 + Navigate to this directory:
 ```bash
