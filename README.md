@@ -55,7 +55,7 @@ generator options
 where possible `options` are:
 + `--help` - show usage help and exit
 + `-n, --nevents=NUM` - generate NUM events. Required argument
-+ `-k, --keyparticle=PDGID` - PDG ID of \"key\" particle (the one the redefined decay chain starts with). Optional argument, by default __511__ (_B<sup>0</sup><sub>d</sub>_)
++ `-k, --keyparticle=PDGID` - PDG ID of "key" particle (the one the redefined decay chain starts with). Optional argument, by default __511__ (_B<sup>0</sup><sub>d</sub>_)
 + `-P, --pythiacfg=CFGFILE` - PYTHIA config file. Optional argument, by default __pythia.cmnd__
 + `-E, --customdec=DECFILE` - EvtGen user decay file. Optional argument, by default __user.dec__
 + `--evtgendec=DECFILE` - EvtGen decay file. Optional argument, by default __$EVTGEN_ROOT_DIR/share/DECAY_2010.DEC__
