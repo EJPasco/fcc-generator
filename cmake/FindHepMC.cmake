@@ -1,55 +1,42 @@
-#Author: Kamil Sobol
-# This module tries to find the HepMC installation on your system.
+# This module tries to find the HepMC installation
+#
+# This module defines
+# HEPMC_DIR - HepMC installation directory
+# HEPMC_INCLUDE_DIR - where to locate HepMC headers
+# HEPMC_INCLUDE_DIRS - HepMC include directories
+# HEPMC_LIBRARY - where to find HepMC library
+# HEPMC_LIBRARIES - the libraries needed to use HepMC
+# HEPMC_FOUND
 
-MESSAGE(STATUS "Looking for HepMC...")
+# setting the folders to search in
+set(_hepmc_dirs "${HEPMC_PREFIX}" "$ENV{HEPMC_PREFIX}" "/usr" "/usr/local")
 
+# looking for HepMC headers
+find_path(HEPMC_INCLUDE_DIR
+          NAMES "HepMC/GenEvent.h"
+          PATHS ${_hepmc_dirs}
+          PATH_SUFFIXES "include"
+          DOC "HepMC headers directory"
+          )
 
-# try to find HepMC in user defined path
-FIND_LIBRARY(HEPMC_LIB
-NAMES
-HepMC
-PATHS
-${HEPMC_PREFIX}/lib
-)
+set(HEPMC_INCLUDE_DIRS "${HEPMC_INCLUDE_DIR}")
 
+# looking for HepMC library
+find_library(HEPMC_LIBRARY
+             NAMES "HepMC"
+             PATHS ${_hepmc_dirs}
+             PATH_SUFFIXES "lib"
+             DOC "HepMC library"
+             )
 
-# if not try to find HepMC in standard instalation paths
-IF(${HEPMC_LIB} MATCHES "HEPMC_LIB-NOTFOUND")
-FIND_LIBRARY(HEPMC_LIB
-NAMES
-HepMC
-PATHS
-/usr/lib
-/usr/local/lib
-)
-ENDIF(${HEPMC_LIB} MATCHES "HEPMC_LIB-NOTFOUND")
+set(HEPMC_LIBRARIES "${HEPMC_LIBRARY}")
 
-IF(NOT ${HEPMC_LIB} MATCHES "HEPMC_LIB-NOTFOUND")
-FIND_PATH(HEPMC_INCLUDE
-HepMC/GenEvent.h
-/usr/include
-/usr/local/include
-${HEPMC_PREFIX}/include
-)
-ENDIF(NOT ${HEPMC_LIB} MATCHES "HEPMC_LIB-NOTFOUND")
+# getting the installation directory
+get_filename_component(HEPMC_DIR
+                       "${HEPMC_INCLUDE_DIR}"
+                       DIRECTORY
+                       )
 
-# final printout.
-IF((${HEPMC_LIB} MATCHES "HEPMC_LIB-NOTFOUND") OR (${HEPMC_INCLUDE} MATCHES "HEPMC_INCLUDE-NOTFOUND"))
-SET(HEPMC_FOUND FALSE)
-MESSAGE( STATUS "\n"
-"!!!!! HepMC !!!!!\n"
-"!!!!! shared library or includes !!!!!\n"
-"!!!!! not found. !!!!!\n"
-"!!!!! Event interface to HepMC !!!!!\n"
-"!!!!! will not be built !!!!!\n"
-"!!!!! If you have it installed !!!!!\n"
-"!!!!! in custom localisation please edit !!!!!\n"
-"!!!!! config/build.properties file !!!!!")
-ELSE((${HEPMC_LIB} MATCHES "HEPMC_LIB-NOTFOUND") OR (${HEPMC_INCLUDE} MATCHES "HEPMC_INCLUDE-NOTFOUND"))
-SET(HEPMC_FOUND TRUE)
-MESSAGE(STATUS "Looking for HepMC... - found " ${HEPMC_LIB} )
-MESSAGE(STATUS "Looking for HepMC... - found " ${HEPMC_INCLUDE} )
-ENDIF((${HEPMC_LIB} MATCHES "HEPMC_LIB-NOTFOUND") OR (${HEPMC_INCLUDE} MATCHES "HEPMC_INCLUDE-NOTFOUND"))
-
-
-
+# finalazing
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(HepMC DEFAULT_MSG HEPMC_DIR HEPMC_INCLUDE_DIR HEPMC_LIBRARY)

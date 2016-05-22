@@ -1,42 +1,50 @@
-# Find the Photos includes and library.
+# This module tries to find the Photos installation
 #
 # This module defines
-# PHOTOS_INCLUDE_DIR   where to locate Photos.h file
-# PHOTOS_LIBRARY       where to find the libPhotospp library
-# PHOTOS_<lib>_LIBRARY Additional libraries
-# PHOTOS_LIBRARIES     (not cached) the libraries to link against to use Photos
-# PHOTOS_FOUND         if false, you cannot build anything that requires Photos
-# PHOTOS_VERSION       version of Photos if found
+# PHOTOS_DIR - Photos installation directory
+# PHOTOS_INCLUDE_DIR - where to locate Photos headers
+# PHOTOS_INCLUDE_DIRS - Photos include directories
+# PHOTOSPP_LIBRARY - where to find Photospp library
+# PHOTOS_LIBRARIES - the libraries needed to use Photos
+# PHOTOS_FOUND
 
-set(_photosdirs ${PHOTOS_ROOT_DIR} $ENV{PHOTOS_ROOT_DIR} /usr)
+# setting the folders to search in
+set(_photos_dirs "${PHOTOS_ROOT_DIR}" "$ENV{PHOTOS_ROOT_DIR}" "/usr" "/usr/local")
 
+# looking for Photos headers
 find_path(PHOTOS_INCLUDE_DIR
-          NAMES Photos.h Photos/Photos.h
-          HINTS ${_photosdirs}
-          PATH_SUFFIXES include
-          DOC "Specify the directory containing Photos.h.")
+          NAMES "Photos/Photos.h"
+          PATHS ${_photos_dirs}
+          PATH_SUFFIXES "include"
+          DOC "Photos headers directory"
+          )
 
-find_library(PHOTOS_LIBRARY
-             NAMES Photospp
-             HINTS ${_photosdirs}
-             PATH_SUFFIXES lib
-             DOC "Specify the Photos library here.")
-find_library(PHOTOS_HEPMC_LIBRARY
-             NAMES PhotosppHepMC
-             HINTS ${_photosdirs}
-             PATH_SUFFIXES lib
-             DOC "Specify the Photos library here.")
+set(PHOTOS_INCLUDE_DIRS "${PHOTOS_INCLUDE_DIR}")
 
-foreach(_lib PHOTOS_LIBRARY PHOTOS_HEPMC_LIBRARY)
-  if(${_lib})
-    set(PHOTOS_LIBRARIES ${PHOTOS_LIBRARIES} ${${_lib}})
-  endif()
-endforeach()
-set(PHOTOS_INCLUDE_DIRS ${PHOTOS_INCLUDE_DIR} ${PHOTOS_INCLUDE_DIR}/Photos)
+# looking for Photospp library
+find_library(PHOTOSPP_LIBRARY
+             NAMES "Photospp"
+             PATHS ${_photos_dirs}
+             PATH_SUFFIXES "lib"
+             DOC "Phototspp library"
+             )
 
-# handle the QUIETLY and REQUIRED arguments and set PYTHIA8_FOUND to TRUE if
-# all listed variables are TRUE
+# looking for PhotosppHepMC library (optional)
+find_library(PHOTOSPPHEPMC_LIBRARY
+             NAMES "PhotosppHepMC"
+             PATHS ${_photos_dirs}
+             PATH_SUFFIXES "lib"
+             DOC "PhotosppHepMC library"
+             )
 
+set(PHOTOS_LIBRARIES "${PHOTOSPP_LIBRARY}" "${PHOTOSPPHEPMC_LIBRARY}")
+
+# geting the installation directory
+get_filename_component(PHOTOS_DIR
+                       "${PHOTOS_INCLUDE_DIR}"
+                       DIRECTORY
+                       )
+
+# finalizing
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(Photos DEFAULT_MSG PHOTOS_INCLUDE_DIR PHOTOS_LIBRARY PHOTOS_HEPMC_LIBRARY)
-mark_as_advanced(PHOTOS_INCLUDE_DIR PHOTOS_LIBRARY PHOTOS_HEPMC_LIBRARY)
+find_package_handle_standard_args(Photos DEFAULT_MSG PHOTOS_DIR PHOTOS_INCLUDE_DIR PHOTOSPP_LIBRARY)

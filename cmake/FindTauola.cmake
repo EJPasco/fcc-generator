@@ -1,43 +1,42 @@
-# Find the Tauola includes and library.
+# This module tries to find the Tauola installation
 #
 # This module defines
-# TAUOLA_INCLUDE_DIR   where to locate Tauola.h file
-# TAUOLA_LIBRARY       where to find the libTauolapp library
-# TAUOLA_<lib>_LIBRARY Additional libraries
-# TAUOLA_LIBRARIES     (not cached) the libraries to link against to use Tauola
-# TAUOLA_FOUND         if false, you cannot build anything that requires Tauola
-# TAUOLA_VERSION       version of Tauola if found
+# TAUOLA_DIR - Tauola installation directory
+# TAUOLA_INCLUDE_DIR - where to locate Tauola headers
+# TAUOLA_INCLUDE_DIRS - Tauola include directories
+# TAUOLACXXINTERFACE_LIBRARY - where to find TauolaCxxInterface library
+# TAUOLA_LIBRARIES - the libraries needed to use Tauola
+# TAUOLA_FOUND
 
-set(_tauoladirs ${TAUOLA_ROOT_DIR} $ENV{TAUOLA_ROOT_DIR} /usr)
+# setting the folders to search in
+set(_tauola_dirs "${TAUOLA_ROOT_DIR}" "$ENV{TAUOLA_ROOT_DIR}" "/usr" "/usr/local")
 
+# looking for Tauola headers
 find_path(TAUOLA_INCLUDE_DIR
-          NAMES Tauola.h Tauola/Tauola.h
-          HINTS ${_tauoladirs}
-          PATH_SUFFIXES include
-          DOC "Specify the directory containing Tauola.h.")
+          NAMES "Tauola/Tauola.h"
+          PATHS ${_tauola_dirs}
+          PATH_SUFFIXES "include"
+          DOC "Tauola headers directory"
+          )
 
-find_library(TAUOLA_FORTRAN_LIBRARY
-             NAMES TauolaFortran
-             HINTS ${_tauoladirs}
-             PATH_SUFFIXES lib
-             DOC "Specify the Tauola Fortran library here.")
+set(TAUOLA_INCLUDE_DIRS "${TAUOLA_INCLUDE_DIR}")
 
-find_library(TAUOLA_CXX_INTERFACE_LIBRARY
-             NAMES TauolaCxxInterface
-             HINTS ${_tauoladirs}
-             PATH_SUFFIXES lib
-             DOC "Specify the Tauola C++ Interface library here.")
+# looking for TauolaCxxInterface library
+find_library(TAUOLACXXINTERFACE_LIBRARY
+             NAMES "TauolaCxxInterface"
+             PATHS ${_tauola_dirs}
+             PATH_SUFFIXES "lib"
+             DOC "TauolaCxxInterface library"
+             )
 
-foreach(_lib TAUOLA_FORTRAN_LIBRARY TAUOLA_CXX_INTERFACE_LIBRARY)
-  if(${_lib})
-    set(TAUOLA_LIBRARIES ${TAUOLA_LIBRARIES} ${${_lib}})
-  endif()
-endforeach()
-set(TAUOLA_INCLUDE_DIRS ${TAUOLA_INCLUDE_DIR} ${TAUOLA_INCLUDE_DIR}/Tauola)
+set(TAUOLA_LIBRARIES "${TAUOLACXXINTERFACE_LIBRARY}")
 
-# handle the QUIETLY and REQUIRED arguments and set PYTHIA8_FOUND to TRUE if
-# all listed variables are TRUE
+# geting the installation directory
+get_filename_component(TAUOLA_DIR
+                       "${TAUOLA_INCLUDE_DIR}"
+                       DIRECTORY
+                       )
 
+# finalazing
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(Tauola DEFAULT_MSG TAUOLA_INCLUDE_DIR TAUOLA_FORTRAN_LIBRARY TAUOLA_CXX_INTERFACE_LIBRARY)
-mark_as_advanced(TAUOLA_INCLUDE_DIR TAUOLA_FORTRAN_LIBRARY TAUOLA_CXX_INTERFACE_LIBRARY)
+find_package_handle_standard_args(Tauola DEFAULT_MSG TAUOLA_DIR TAUOLA_INCLUDE_DIR TAUOLACXXINTERFACE_LIBRARY)

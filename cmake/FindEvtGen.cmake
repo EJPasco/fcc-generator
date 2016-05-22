@@ -1,41 +1,51 @@
-# Find the EvtGen includes and library.
+# This module tries to find the EvtGen installation
 #
 # This module defines
-# EVTGEN_INCLUDE_DIR   where to locate EvtGen.hh file
-# EVTGEN_LIBRARY       where to find the libEvtGen library
-# EVTGEN_LIBRARIES     (not cached) the libraries to link against to use EvtGen
-# EVTGEN_FOUND         if false, you cannot build anything that requires EvtGen
-# EVTGEN_VERSION       version of EvtGen if found
+# EVTGEN_DIR - EvtGen installation directory
+# EVTGEN_INCLUDE_DIR - where to locate EvtGen headers
+# EVTGEN_INCLUDE_DIRS - EvtGen include directories
+# EVTGEN_LIBRARY - where to find EvtGen library
+# EVTGEN_EXTERNAL_LIBRARY - where to find EvtGenExternal library
+# EVTGEN_LIBRARIES - the libraries needed to use EvtGen
+# EVTGEN_FOUND
 
-set(_evtgendirs ${EVTGEN_ROOT_DIR} $ENV{EVTGEN_ROOT_DIR} /usr)
+# setting the folders to search in
+set(_evtgen_dirs "${EVTGEN_ROOT_DIR}" "$ENV{EVTGEN_ROOT_DIR}" "/usr" "/usr/local")
 
+# looking for EvtGen headers
 find_path(EVTGEN_INCLUDE_DIR
-          NAMES EvtGen.hh EvtGen/EvtGen.hh
-          HINTS ${_evtgendirs}
-          PATH_SUFFIXES include
-          DOC "Specify the directory containing EvtGen.hh.")
+          NAMES "EvtGen/EvtGen.hh"
+          PATHS ${_evtgen_dirs}
+          PATH_SUFFIXES "include"
+          DOC "EvtGen headers directory"
+          )
 
+set(EVTGEN_INCLUDE_DIRS "${EVTGEN_INCLUDE_DIR}")
+
+# looking for EvtGen library
 find_library(EVTGEN_LIBRARY
-             NAMES EvtGen
-             HINTS ${_evtgendirs}
-             PATH_SUFFIXES lib
-             DOC "Specify the EvtGen library here.")
+             NAMES "EvtGen"
+             PATHS ${_evtgen_dirs}
+             PATH_SUFFIXES "lib"
+             DOC "EvtGen library"
+             )
 
+# looking for EvtGenExternal library
 find_library(EVTGEN_EXTERNAL_LIBRARY
-             NAMES EvtGenExternal
-             HINTS ${_evtgendirs}
-             PATH_SUFFIXES lib)
+             NAMES "EvtGenExternal"
+             PATHS ${_evtgen_dirs}
+             PATH_SUFFIXES "lib"
+             DOC "EvtGenExternal library"
+             )
 
-foreach(_lib EVTGEN_LIBRARY EVTGEN_EXTERNAL_LIBRARY)
-  if(${_lib})
-    set(EVTGEN_LIBRARIES ${EVTGEN_LIBRARIES} ${${_lib}})
-  endif()
-endforeach()
-set(EVTGEN_INCLUDE_DIRS ${EVTGEN_INCLUDE_DIR} ${EVTGEN_INCLUDE_DIR}/EvtGen )
+set(EVTGEN_LIBRARIES "${EVTGEN_LIBRARY}" "${EVTGEN_EXTERNAL_LIBRARY}")
 
-# handle the QUIETLY and REQUIRED arguments and set PYTHIA8_FOUND to TRUE if
-# all listed variables are TRUE
+# geting the installation directory
+get_filename_component(EVTGEN_DIR
+                       "${EVTGEN_INCLUDE_DIR}"
+                       DIRECTORY
+                       )
 
+# finalazing
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(EvtGen DEFAULT_MSG EVTGEN_INCLUDE_DIR EVTGEN_LIBRARY EVTGEN_EXTERNAL_LIBRARY)
-mark_as_advanced(EVTGEN_INCLUDE_DIR EVTGEN_LIBRARY EVTGEN_EXTERNAL_LIBRARY)
+find_package_handle_standard_args(EvtGen DEFAULT_MSG EVTGEN_DIR EVTGEN_INCLUDE_DIR EVTGEN_LIBRARY EVTGEN_EXTERNAL_LIBRARY)
