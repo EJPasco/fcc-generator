@@ -62,6 +62,7 @@ where possible `options` are:
 + `--evtgenpdl=PDLFILE` - EvtGen PDL file. Optional argument, by default __$EVTGEN_ROOT_DIR/share/evt.pdl__
 + `-o, --outfile=FILENAME` - Output file name. Optional argument, by default __output.root__
 + `-v, --verbosity` - Verbosity level. Possible values 0, 1, 2. Otional argument, by default 0
+
 If compiled without Boost, usage is:
 ```bash
 generator n
