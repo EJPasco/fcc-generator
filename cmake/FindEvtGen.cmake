@@ -17,8 +17,7 @@ find_path(EVTGEN_INCLUDE_DIR
           NAMES "EvtGen/EvtGen.hh"
           PATHS ${_evtgen_dirs}
           PATH_SUFFIXES "include"
-          DOC "EvtGen headers directory"
-          )
+          DOC "EvtGen headers directory")
 
 set(EVTGEN_INCLUDE_DIRS "${EVTGEN_INCLUDE_DIR}")
 
@@ -27,24 +26,21 @@ find_library(EVTGEN_LIBRARY
              NAMES "EvtGen"
              PATHS ${_evtgen_dirs}
              PATH_SUFFIXES "lib"
-             DOC "EvtGen library"
-             )
+             DOC "EvtGen library")
 
 # looking for EvtGenExternal library
 find_library(EVTGEN_EXTERNAL_LIBRARY
              NAMES "EvtGenExternal"
              PATHS ${_evtgen_dirs}
              PATH_SUFFIXES "lib"
-             DOC "EvtGenExternal library"
-             )
+             DOC "EvtGenExternal library")
 
 set(EVTGEN_LIBRARIES "${EVTGEN_LIBRARY}" "${EVTGEN_EXTERNAL_LIBRARY}")
 
 # geting the installation directory
 get_filename_component(EVTGEN_DIR
                        "${EVTGEN_INCLUDE_DIR}"
-                       DIRECTORY
-                       )
+                       DIRECTORY)
 
 # finalazing
 include(FindPackageHandleStandardArgs)

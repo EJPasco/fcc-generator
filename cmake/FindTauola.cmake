@@ -16,8 +16,7 @@ find_path(TAUOLA_INCLUDE_DIR
           NAMES "Tauola/Tauola.h"
           PATHS ${_tauola_dirs}
           PATH_SUFFIXES "include"
-          DOC "Tauola headers directory"
-          )
+          DOC "Tauola headers directory")
 
 set(TAUOLA_INCLUDE_DIRS "${TAUOLA_INCLUDE_DIR}")
 
@@ -26,16 +25,14 @@ find_library(TAUOLACXXINTERFACE_LIBRARY
              NAMES "TauolaCxxInterface"
              PATHS ${_tauola_dirs}
              PATH_SUFFIXES "lib"
-             DOC "TauolaCxxInterface library"
-             )
+             DOC "TauolaCxxInterface library")
 
 set(TAUOLA_LIBRARIES "${TAUOLACXXINTERFACE_LIBRARY}")
 
 # geting the installation directory
 get_filename_component(TAUOLA_DIR
                        "${TAUOLA_INCLUDE_DIR}"
-                       DIRECTORY
-                       )
+                       DIRECTORY)
 
 # finalazing
 include(FindPackageHandleStandardArgs)

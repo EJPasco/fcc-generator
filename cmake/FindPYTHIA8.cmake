@@ -16,8 +16,7 @@ find_path(PYTHIA8_INCLUDE_DIR
           NAMES "Pythia8/Pythia.h"
           PATHS ${_pythia8_dirs}
           PATH_SUFFIXES "include"
-          DOC "PYTHIA headers directory"
-          )
+          DOC "PYTHIA headers directory")
 
 set(PYTHIA8_INCLUDE_DIRS "${PYTHIA8_INCLUDE_DIR}")
 
@@ -26,16 +25,14 @@ find_library(PYTHIA8_LIBRARY
              NAMES "pythia8" "Pythia8"
              PATHS ${_pythia8_dirs}
              PATH_SUFFIXES "lib"
-             DOC "pythia8 library"
-             )
+             DOC "pythia8 library")
 
 set(PYTHIA8_LIBRARIES "${PYTHIA8_LIBRARY}")
 
 # geting the installation directory
 get_filename_component(PYTHIA8_DIR
                        "${PYTHIA8_INCLUDE_DIR}"
-                       DIRECTORY
-                       )
+                       DIRECTORY)
 
 # finalizing
 include(FindPackageHandleStandardArgs)

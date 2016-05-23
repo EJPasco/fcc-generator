@@ -39,15 +39,13 @@ set(CMAKE_PREFIX_PATH $ENV{FCCEDM})
 
 find_package(podio
              REQUIRED
-             PATHS $ENV{PODIO}
-             )
+             PATHS $ENV{PODIO})
 message(STATUS "Found podio: ${podio_DIR}")
 
 # make sure the library is found.
 find_library(PODIOLIB
              NAMES podio
-             PATHS $ENV{PODIO}/lib
-             )
+             PATHS $ENV{PODIO}/lib)
 if (NOT PODIOLIB)
     message(FATAL_ERROR "libpodio.so cannot be found dynamically. Make sure you have sourced PODIO init.sh file to set up your environment to use PODIO")
 endif()
@@ -55,8 +53,7 @@ link_directories(${podio_LIBRARY_DIR})
 
 find_package(fccedm
              REQUIRED
-             PATHS $ENV{FCCEDM}
-             )
+             PATHS $ENV{FCCEDM})
 message(STATUS "Found fcc-edm: ${fccedm_DIR}")
 
 find_package(ROOT REQUIRED)
@@ -70,16 +67,14 @@ find_package(EvtGen REQUIRED)
 find_package(Photos REQUIRED)
 
 # set up include-directories
-include_directories(
-    "${PROJECT_BINARY_DIR}/include"
-    "${ROOT_INCLUDE_DIR}"
-    "${podio_INCLUDE_DIRS}"
-    "${FCCEDM_INCLUDE_DIRS}"
-    "${HEPMC_INCLUDE_DIR}"
-    "${PYTHIA8_INCLUDE_DIRS}"
-    "${EVTGEN_INCLUDE_DIR}"
-    "${PHOTOS_INCLUDE_DIRS}"
-)
+include_directories("${PROJECT_BINARY_DIR}/include"
+                    "${ROOT_INCLUDE_DIR}"
+                    "${podio_INCLUDE_DIRS}"
+                    "${FCCEDM_INCLUDE_DIRS}"
+                    "${HEPMC_INCLUDE_DIR}"
+                    "${PYTHIA8_INCLUDE_DIRS}"
+                    "${EVTGEN_INCLUDE_DIR}"
+                    "${PHOTOS_INCLUDE_DIRS}")
 
 # add sub-directories
 add_subdirectory(src)

@@ -40,21 +40,21 @@
 #endif
 
 std::unordered_map<int, std::string> const particle_names = {{511, "B_d^0"},
-												   {-511, "Anti-B_d^0"},
-												   {531, "B_s^0"},
-												   {-531, "Anti-B_s^0"},
-												   {313, "K^*0"},
-												   {313, "Anti-K^*0"},
-											       {15, "tau-"},
-											       {-15, "tau+"},
-											       {321, "K^+"},
-												   {-321, "K^-"},
-												   {211, "pi^+"},
-												   {-211, "pi^-"},
-										    	   {16, "nu_tau"},
-									   			   {-16, "Anti-nu_tau"},
-								   				   {431, "D_s^+"},
-							   					   {-431, "D_s^-"}};
+															 {-511, "Anti-B_d^0"},
+															 {531, "B_s^0"},
+															 {-531, "Anti-B_s^0"},
+															 {313, "K^*0"},
+															 {313, "Anti-K^*0"},
+											    			 {15, "tau-"},
+											    			 {-15, "tau+"},
+													    	 {321, "K^+"},
+															 {-321, "K^-"},
+															 {211, "pi^+"},
+															 {-211, "pi^-"},
+												    		 {16, "nu_tau"},
+											   				 {-16, "Anti-nu_tau"},
+										   					 {431, "D_s^+"},
+									   						 {-431, "D_s^-"}};
 
 bool isBAtProduction(HepMC::GenParticle const * thePart); // utility function to determine whether the particle is NOT a B oscillation. Stolen from https://lhcb-release-area.web.cern.ch/LHCb-release-area/DOC/rec/latest_doxygen/da/db4/_hep_m_c_utils_8h_source.html
 
@@ -158,8 +158,18 @@ int main(int argc, char * argv[]){
 		std::cout << "Initializing EvtGen" << std::endl;
 	}
 
-	//
-	auto evtgen = new EvtGenDecays(&pythia, evtgen_decfile.c_str(), evtgen_pdlfile.c_str(), nullptr, nullptr, 1, false, true, true, false); // creating EvtGen generator
+	// creating EvtGen generator
+	auto evtgen = new EvtGenDecays(&pythia, // a pointer to the PYTHIA generator
+								   evtgen_decfile.c_str(), // the EvtGen decay file name
+								   evtgen_pdlfile.c_str(), // the EvtGen particle data file name
+								   nullptr, // the optional EvtExternalGenList pointer (must be be provided if the next argument is provided to avoid double initializations)
+								   nullptr, // the EvtAbsRadCorr pointer to pass to EvtGen
+								   1, // the mixing type to pass to EvtGen
+								   false, // a flag to use XML files to pass to EvtGen
+								   true, // a flag to limit decays based on the Pythia criteria (based on the particle decay vertex)
+								   true, // a flag to use external models with EvtGen
+								   false); // a flag if an FSR model should be passed to EvtGen (pay attention to this, default is true)
+
 	if (evtgen) {
 		evtgen->readDecayFile(evtgen_user_decfile.c_str()); // reading user defined decays
 		evtgen->exclude(23); // make PYTHIA itself (not EvtGen) decay Z

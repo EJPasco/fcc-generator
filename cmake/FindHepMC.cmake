@@ -16,8 +16,7 @@ find_path(HEPMC_INCLUDE_DIR
           NAMES "HepMC/GenEvent.h"
           PATHS ${_hepmc_dirs}
           PATH_SUFFIXES "include"
-          DOC "HepMC headers directory"
-          )
+          DOC "HepMC headers directory")
 
 set(HEPMC_INCLUDE_DIRS "${HEPMC_INCLUDE_DIR}")
 
@@ -26,16 +25,14 @@ find_library(HEPMC_LIBRARY
              NAMES "HepMC"
              PATHS ${_hepmc_dirs}
              PATH_SUFFIXES "lib"
-             DOC "HepMC library"
-             )
+             DOC "HepMC library")
 
 set(HEPMC_LIBRARIES "${HEPMC_LIBRARY}")
 
 # getting the installation directory
 get_filename_component(HEPMC_DIR
                        "${HEPMC_INCLUDE_DIR}"
-                       DIRECTORY
-                       )
+                       DIRECTORY)
 
 # finalazing
 include(FindPackageHandleStandardArgs)

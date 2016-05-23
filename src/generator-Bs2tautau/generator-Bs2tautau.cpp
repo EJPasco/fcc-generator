@@ -139,8 +139,17 @@ int main(int argc, char * argv[]){
 		std::cout << "Initializing EvtGen" << std::endl;
 	}
 
-	//
-	auto evtgen = new EvtGenDecays(&pythia, evtgen_decfile.c_str(), evtgen_pdlfile.c_str()); // creating EvtGen generator
+	// creating EvtGen generator
+	auto evtgen = new EvtGenDecays(&pythia, // a pointer to the PYTHIA generator
+								   evtgen_decfile.c_str(), // the EvtGen decay file name
+								   evtgen_pdlfile.c_str(), // the EvtGen particle data file name
+								   nullptr, // the optional EvtExternalGenList pointer (must be be provided if the next argument is provided to avoid double initializations)
+								   nullptr, // the EvtAbsRadCorr pointer to pass to EvtGen
+								   1, // the mixing type to pass to EvtGen
+								   false, // a flag to use XML files to pass to EvtGen
+								   true, // a flag to limit decays based on the Pythia criteria (based on the particle decay vertex)
+								   true, // a flag to use external models with EvtGen
+								   false); // a flag if an FSR model should be passed to EvtGen (pay attention to this, default is true)
 	if (evtgen) {
 		evtgen->readDecayFile(evtgen_user_decfile.c_str()); // reading user defined decays
 		evtgen->exclude(23); // make PYTHIA itself (not EvtGen) decay Z
