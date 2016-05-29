@@ -8,17 +8,9 @@ ChargeConj my_tau+ my_tau-
 
 # Modify the decay of the B0.
 Decay B0
-    1.000 my_K*0 my_tau+ my_tau- BTOXSLL;
+    1.000 my_K*0 my_tau+ my_tau- BTOSLLBALL;
 Enddecay
-# This doesn't work for some reason
-#CDecay anti-B0
-
-# Modify the decay of the anti-B0.
-Decay anti-B0
-    1.000 my_anti-K*0 my_tau+ my_tau- BTOXSLL;
-Enddecay
-# This doesn't work for some reason
-#CDecay anti-B0
+CDecay anti-B0
 
 # Modify the decay of the K*0 (for the B0).
 Decay my_K*0
