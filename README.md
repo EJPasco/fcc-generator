@@ -1,4 +1,7 @@
 # fcc-generator
+
+**DISCONTINUED**, but feel free to fork it.
+
 Generator of events for _B<sup>0</sup><sub>d</sub> &rarr; K<sup>*0</sup> &tau;<sup>+</sup> &tau;<sup>-</sup>_ studies. It combines PYTHIA and EvtGen generation facilities with PODIO/fcc-edm storing system.
 ## Requirements
 ### Basic
